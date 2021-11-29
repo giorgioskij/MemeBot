@@ -31,7 +31,8 @@ def main():
         add_user(chat_id)
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False, row_width=2)
         markup.row(types.KeyboardButton('/help'))
-        markup.row(types.KeyboardButton('/subscribe'), types.KeyboardButton('/meme'))
+        markup.row(types.KeyboardButton('/subscribe'), types.KeyboardButton('/unsubscribe'))
+        markup.row(types.KeyboardButton('/meme'))
         memebot.send_message(
             chat_id,
             "Welcome to Daily Memini's!\n\nUse \subscribe to subscribe to the daily meme service,\nor use \meme to receive a single meme",
@@ -48,6 +49,13 @@ def main():
         chat_id = message.chat.id
         memebot.reply_to(message, "Glad to have you on our daily subscription - it's free of charge!\nYou will receive a meme every morning to cheer you up!")
         add_subscription(chat_id)
+    
+    # handle /unsubscribe command
+    @memebot.message_handler(commands=['subscribe'])
+    def subscribe(message):
+        chat_id = message.chat.id
+        memebot.reply_to(message, "Sorry to see you go! :(")
+        remove_subscription(chat_id)
 
 
     schedule.every().day.at(MEME_TIME).do(send_broadcast, memebot=memebot)
@@ -103,7 +111,15 @@ def add_subscription(chat_id: int):
     users[chat_id]['subscribed'] = True
     save_users(users)
 
-# increments by 1 the meme counter of a user
+# cancels the subscription for a user
+def remove_subscription(chat_id: int):
+    add_user(chat_id)
+    users = read_users()
+    users[chat_id]['subscribed'] = False
+    save_users(users)
+
+# increments by 1 the meme counter of a user: it prevents the bot
+# from sending the same meme to a user multiple times
 def increment_user_counter(chat_id: int):
     add_user(chat_id)
     users = read_users()
